@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title> 实现thrift下http协议通讯 </title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1> SecondLife </h1>
+        <h2>The future is scary but you can’t just run to the past cause it’s familiar.</h2>
+        
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          
+          <h2>实现thrift下http协议通讯</h2>
+<p class="meta">19 Feb 2016</p>
+
+<h2 id="section">目标</h2>
+<hr />
+<p>初学thrift，很想写一个基于http协议的接口例子，但由于网络上关于go-thrift http协议的教程和例子基本找不到，不得不动手摸索，经过一些坑后，掌握了thrift http协议的使用方法，本文仅限小白观看，大牛们请绕道。</p>
+
+<ul>
+  <li>Golang写thrift服务端，Js写客户端。</li>
+  <li>用thirft构建简单的微服务组。</li>
+  <li>理解thrift各种数据传输格式。</li>
+  <li>尝试用thrift重构现有服务。</li>
+</ul>
+
+<h2 id="windows2008">开发前准备（系统环境 windows2008）</h2>
+
+<h4 id="section-1">下载依赖包</h4>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>go get git.apache.org/thrift.git/lib/go/thrift
+</code></pre>
+</div>
+
+<h4 id="idl">定义IDL</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>service UserStorage
+{
+     i32 Sum( 1: i32 arg_number1, 2: i32 arg_number2),
+     string GetString()
+}
+</code></pre>
+</div>
+
+<h4 id="section-2">生成库文件</h4>
+
+<p>下载开发库编译器</p>
+
+<p><a href="http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.3/thrift-0.9.3.exe" title="下载开发库编译器">http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.3/thrift-0.9.3.exe</a></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>//请将下载的exe文件放到系统环境变量path里，然后在cmd窗口执行如下命令
+thrift-0.9.3.exe  -gen go UserStorage.thrift
+thrift-0.9.3.exe  -gen js UserStorage.thrift
+//这里注意，生成的 user_storage-remote 文件夹仅仅是一个示例，没什么作用。 
+</code></pre>
+</div>
+
+<h2 id="gojs">编码实现（go服务端+js客户端）</h2>
+
+<h4 id="golang">golang实现服务端</h4>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>package main
+
+import (
+	rpc "thrift.go/userinfo"
+	"fmt"
+	"git.apache.org/thrift.git/lib/go/thrift"
+	"net"
+	"net/http"
+	"sync/atomic"
+	"golang.org/x/net/netutil"
+	"runtime"
+)
+
+////////////////////////////////////////
+////通过IDL定义的UserStorage接口实现 Start
+////////////////////////////////////////
+type UserStorage struct {
+}
+
+func (this *UserStorage) Sum(arg_number1 int32, arg_number2 int32) (r int32, err error){
+	result := arg_number1 + arg_number2;
+	return result,nil;
+}
+
+var Counter int32
+func (this *UserStorage) GetString() (r string, err error){
+	Counter := atomic.AddInt32(&amp;Counter,1)
+	return "thrift is OK : " +  fmt.Sprintf("%d",Counter),nil;
+}
+
+////////////////////////////////////////
+//// End
+////////////////////////////////////////
+
+func main() {
+	var processor = thrift.NewTMultiplexedProcessor()
+
+	inProtocolFactory := thrift.NewTJSONProtocolFactory()
+	outProtocolFactory := thrift.NewTJSONProtocolFactory()
+
+	processor.RegisterProcessor(
+		"UserStorage",
+		rpc.NewUserStorageProcessor(&amp;UserStorage{}),
+	)
+
+	thriftHandlerFunc:=thrift.NewThriftHandlerFunc(processor,inProtocolFactory,outProtocolFactory)
+
+	http.HandleFunc("/thrift", thriftHandlerFunc)
+
+	http.ListenAndServe(":9388",nil)
+}
+</code></pre>
+</div>
+
+<h4 id="js">JS客户端准备</h4>
+
+<p>下载 thrift js包（如果无法下载，可以进你的gopath对应目录里找）</p>
+
+<p><a href="http://git.apache.org/thrift.git/lib/js/src/thrift.js" title="获取thrift js包">http://git.apache.org/thrift.git/lib/js/src/thrift.js</a></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> 根据前面生成的gen-js目录下，找到 UserStorage.js 等文件。
+ 编写一个简单的html，实现js客户端访问服务端。
+</code></pre>
+</div>
+
+<h4 id="js-1">JS客户端实现</h4>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>&lt;script type="text/javascript" src="/js/jquery-1.9.1.min.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="/js/thrift.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="/js/UserStorage_types.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="/js/UserStorage.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+
+    var client1;
+    $(document).ready(function () {
+        var debugPosation = 0;
+        try {
+
+            //这里用到了thrift 9.0以后的多服务支持特性
+            var mp = new Thrift.Multiplexer(); 
+            var transport = new Thrift.Transport("http://127.0.0.1:9388/thrift");
+            var protocol = new Thrift.Protocol(transport);
+            client1 = mp.createClient('UserStorage', UserStorageClient, transport);
+
+        } catch (e) {
+            alert(e.message);
+        }
+    });
+
+
+    ///客户端异步 远程调用服务端方法 GetString
+    function GetString() {
+        client1.GetString(function (data) {
+                    console.log(data);
+                }
+        );
+    }
+
+    ///客户端异步 远程调用服务端方法 Sum
+    function Sum() {
+        client1.Sum(100,5,function (data) {
+                    console.log(data);
+                }
+        );
+    }
+
+&lt;/script&gt;
+</code></pre>
+</div>
+
+<h2 id="section-3">总结</h2>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>thrift可以很方便统一前后端接口及model，对拆分或重构老系统是有一定帮助的。
+thrift用来开发微服务应该是很不错的选择。当然我也是刚入门，对于它的理解很有限。
+</code></pre>
+</div>
+
+<hr />
+
+<p>本人博客文章采用CC <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" title="Attribution-NonCommercial">Attribution-NonCommercial</a>协议: CC Attribution-NonCommercial 必须保留原作者署名,并且不允许用于商业用途,其他行为都是允许的。</p>
+
+<hr />
+
+
+
+
+        </section>
+
+        <aside id="sidebar">
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+
+          <p class="repo-owner">不转载技术好文</p>
+
+          <p class="repo-owner">只原创学习心得</p>
+
+          <p>QQ：80186658</a></p>
+        </aside>
+      </div>
+    </div>
+
+  </body>
+</html>

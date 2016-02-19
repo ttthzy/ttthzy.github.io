@@ -52,6 +52,8 @@
 </div>
 
 <h4 id="idl">定义IDL</h4>
+<p>新建一个 UserStorage.thrift 文件，定义内容如下</p>
+
 <div class="highlighter-rouge"><pre class="highlight"><code>service UserStorage
 {
      i32 Sum( 1: i32 arg_number1, 2: i32 arg_number2),
@@ -66,7 +68,7 @@
 
 <p><a href="http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.3/thrift-0.9.3.exe" title="下载开发库编译器">http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.3/thrift-0.9.3.exe</a></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>//请将下载的exe文件放到系统环境变量path里，然后在cmd窗口执行如下命令
+<div class="highlighter-rouge"><pre class="highlight"><code>//请将下载的exe文件放到系统环境变量path里，进入idl文件所在目录，执行如下cmd
 thrift-0.9.3.exe  -gen go UserStorage.thrift
 thrift-0.9.3.exe  -gen js UserStorage.thrift
 //这里注意，生成的 user_storage-remote 文件夹仅仅是一个示例，没什么作用。 

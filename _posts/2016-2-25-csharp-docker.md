@@ -125,7 +125,7 @@ categories: logs update
 6、一个完整的dockerfile：
 
 ```
-### AspnNt5 Docker image
+### My_AspNet5_Docker_Image
 ### 80186658@qq.com
 
 FROM debian:jessie
@@ -176,7 +176,7 @@ ENV PATH $PATH:$DNX_USER_HOME/runtimes/default/bin
 
       bash: kestrel: command not found
 
-经过数次踩坑经验，如果出现以上错误，大致可能因为project.json文件里版本号不匹配，dnvm list对一下运行时的版本号。终极解决打发可以这样：
+经过数次踩坑经验，如果出现以上错误，大致可能因为project.json文件里版本号不匹配，dnvm list对一下运行时的版本号。终极解决大发可以这样：
 
       比如版本号是：1.0.0-rc1-update1
       直接写成：1.0.0-*

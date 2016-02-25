@@ -2,7 +2,7 @@
 layout: post
 title:  "实现thrift下http协议通讯"
 permalink: /:categories/:title.html
-date:   2016-02-19 13:42:31 +0800
+date:   2016-02-15 13:42:31 +0800
 categories: logs update
 ---
 
@@ -27,6 +27,8 @@ categories: logs update
 
 
 #### 定义IDL
+新建一个 UserStorage.thrift 文件，定义内容如下
+
     service UserStorage
     {
          i32 Sum( 1: i32 arg_number1, 2: i32 arg_number2),
@@ -39,10 +41,10 @@ categories: logs update
 
 [http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.3/thrift-0.9.3.exe](http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.3/thrift-0.9.3.exe "下载开发库编译器")
 
-    //请将下载的exe文件放到系统环境变量path里，然后在cmd窗口执行如下命令
+    //请将下载的exe文件放到系统环境变量path里，进入idl文件所在目录，执行如下cmd
     thrift-0.9.3.exe  -gen go UserStorage.thrift
     thrift-0.9.3.exe  -gen js UserStorage.thrift
-    //这里注意，生成的 user_storage-remote 文件夹仅仅是一个示例，没什么作用。 
+    //这里注意，生成的 user_storage-remote 文件夹仅仅是一个示例，没什么作用。
 
 
 ## 编码实现（go服务端+js客户端）
@@ -50,7 +52,7 @@ categories: logs update
 #### golang实现服务端
 
     package main
-    
+
     import (
     	rpc "thrift.go/userinfo"
     	"fmt"
@@ -61,43 +63,43 @@ categories: logs update
     	"golang.org/x/net/netutil"
     	"runtime"
     )
-    
+
     ////////////////////////////////////////
     ////通过IDL定义的UserStorage接口实现 Start
     ////////////////////////////////////////
     type UserStorage struct {
     }
-    
+
     func (this *UserStorage) Sum(arg_number1 int32, arg_number2 int32) (r int32, err error){
     	result := arg_number1 + arg_number2;
     	return result,nil;
     }
-    
+
     var Counter int32
     func (this *UserStorage) GetString() (r string, err error){
     	Counter := atomic.AddInt32(&Counter,1)
     	return "thrift is OK : " +  fmt.Sprintf("%d",Counter),nil;
     }
-    
+
     ////////////////////////////////////////
     //// End
     ////////////////////////////////////////
 
     func main() {
     	var processor = thrift.NewTMultiplexedProcessor()
-    
+
     	inProtocolFactory := thrift.NewTJSONProtocolFactory()
     	outProtocolFactory := thrift.NewTJSONProtocolFactory()
-    
+
     	processor.RegisterProcessor(
     		"UserStorage",
     		rpc.NewUserStorageProcessor(&UserStorage{}),
     	)
-    
+
     	thriftHandlerFunc:=thrift.NewThriftHandlerFunc(processor,inProtocolFactory,outProtocolFactory)
-    
+
     	http.HandleFunc("/thrift", thriftHandlerFunc)
-    
+
     	http.ListenAndServe(":9388",nil)
     }
 
@@ -127,7 +129,7 @@ categories: logs update
             try {
 
                 //这里用到了thrift 9.0以后的多服务支持特性
-                var mp = new Thrift.Multiplexer(); 
+                var mp = new Thrift.Multiplexer();
                 var transport = new Thrift.Transport("http://127.0.0.1:9388/thrift");
                 var protocol = new Thrift.Protocol(transport);
                 client1 = mp.createClient('UserStorage', UserStorageClient, transport);
@@ -173,6 +175,3 @@ categories: logs update
 [jekyll-docs]: http://jekyllrb.com/docs/home
 [jekyll-gh]:   https://github.com/jekyll/jekyll
 [jekyll-talk]: https://talk.jekyllrb.com/
-
-
-    

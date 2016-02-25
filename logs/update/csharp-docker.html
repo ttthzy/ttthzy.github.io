@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title> 用docker构建AspNet5应用 </title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1> SecondLife </h1>
+        <h2>The future is scary but you can’t just run to the past cause it’s familiar.</h2>
+        
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          
+          <h2>用docker构建AspNet5应用</h2>
+<p class="meta">25 Feb 2016</p>
+
+<h2 id="section">目标</h2>
+<hr />
+<p>因为做.net开发很多年，自从接触docker以来，一直都很想把aspnet部署到docker上，但因为种种原因想法拖延至今。在痛下决心后，经过数次踩雷踩坑，终于让aspnet成功上云。</p>
+
+<ul>
+  <li>熟悉linux下的aspnet5开发环境部署。</li>
+  <li>将一个aspnet5应用通过docker快速部署到云端。</li>
+</ul>
+
+<h2 id="ubuntu-14">准备（系统环境 Ubuntu 14）</h2>
+
+<h4 id="docker">安装最新版docker</h4>
+
+<p>使用 apt-get</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+ sudo sh -c "echo deb https://get.docker.io/ubuntu docker main &gt; /etc/apt/sources.list.d/docker.list"
+ sudo apt-get update
+ sudo apt-get install lxc-docker
+</code></pre>
+</div>
+
+<p>手工安装</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> killall docker
+ wget http://get.docker.io/builds/Linux/x86_64/docker-latest -O docker
+ chmod +x docker
+ sudo ./docker -d &amp;
+</code></pre>
+</div>
+
+<p>都是一些常用指令，不过多说明了，有问题可自行google。</p>
+
+<h4 id="aspnet5">安装aspnet5开发环境</h4>
+<p>这将是一个漫长的过程，没耐心嫌麻烦的的请止步。</p>
+
+<p>1、安装DNVM</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> sudo apt-get install unzip curl
+ curl -sSL https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.sh | DNX_BRANCH=dev sh &amp;&amp; source ~/.dnx/dnvm/dnvm.sh
+ source ~/.dnx/dnvm/dnvm.sh
+
+ //安装完毕后，输入dnvm看下是否安装正确
+</code></pre>
+</div>
+
+<p>2、使用DNVM安装DNX</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> sudo apt-get install libunwind8 gettext libssl-dev libcurl4-openssl-dev zlib1g libicu-dev uuid-dev
+ dnvm upgrade -r coreclr
+
+ // 安装最新版 mono
+ apt-key adv --keyserver keyserver.ubuntu.com –recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+ echo "deb http://download.mono-project.com/repo/debian wheezy main" |  tee /etc/apt/sources.list.d/mono-xamarin.list
+ apt-get update
+ apt-get install Mono-Complete
+
+ // 安装DNX for Mono
+ dnvm upgrade -r mono
+</code></pre>
+</div>
+
+<p>3、安装libuv（kestrel）</p>
+
+<p>这是微软提供的一个web容器，可用来测试或独立部署web应用。github上的地址附上：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  https://github.com/libuv/libuv
+  https://github.com/aspnet/KestrelHttpServer
+</code></pre>
+</div>
+
+<p>下面是安装指令</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  sudo apt-get install make automake libtool curl
+  curl -sSL https://github.com/libuv/libuv/archive/v1.8.0.tar.gz | sudo tar zxfv - -C /usr/local/src
+  cd /usr/local/src/libuv-1.8.0
+  sudo sh autogen.sh
+  sudo ./configure
+  sudo make
+  sudo make install
+  sudo rm -rf /usr/local/src/libuv-1.8.0 &amp;&amp; cd ~/
+  sudo ldconfig
+</code></pre>
+</div>
+
+<h4 id="section-1">开发环境到这就部署完毕了，接下来是开发工具</h4>
+
+<p>根据微软官方推荐有4个工具可选，这里根据个人喜好，我用yo作为开发工具演示，当然vscode也是必不可少的</p>
+
+<p>1、安装最新版nodejs</p>
+
+<p>请注意，nodejs版本太低装不了yo，所以请自行升级到最新版。如果升级过程中踩坑的话，建议直接从官方下载最新的编译包或者源码自行编译。</p>
+
+<p>2、安装yo （不推荐用root用户安装，否则会遇到不少坑）</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> // 通过npm包管理器安装yo
+ npm install -g yo
+
+ // 安装aspnet模板库
+ npm install -g generator-aspnet
+
+ //最后
+ yo aspnet
+</code></pre>
+</div>
+
+<p>3、至此就可以通过yo建立aspnet5项目了。</p>
+
+<h2 id="aspnet-docker-image">构建 aspnet docker image</h2>
+
+<p>1、用yo生成一个aspnet的webapi项目，注意目录对应第四步</p>
+
+<p>2、docker pull microsoft/aspnet</p>
+
+<p>3、如果你网络无障碍的话，就直接 docker build . ，第二步只为被墙的兄弟准备。</p>
+
+<p>4、通过第二步的，生成容器并将卷映射至宿主机：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  docker run -i -t -p 22 -p 5000:5000 -v /root/aspnet5:/code  microsoft/aspnet:latest /bin/bash
+</code></pre>
+</div>
+
+<p>5、宿主机访问5000端口测试api接口即可。</p>
+
+<p>6、一个完整的dockerfile：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>### AspnNt5 Docker image
+### 80186658@qq.com
+
+FROM debian:jessie
+
+ENV DNX_VERSION 1.0.0-beta8
+ENV DNX_USER_HOME /opt/dnx
+
+RUN apt-get -qq update &amp;&amp; apt-get -qqy install unzip curl libicu-dev libunwind8 gettext libssl-dev libcurl3-gnutls zlib1g &amp;&amp; rm -rf /var/lib/apt/lists/*
+
+RUN curl -sSL https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.sh | DNX_USER_HOME=$DNX_USER_HOME DNX_BRANCH=v$DNX_VERSION sh
+RUN bash -c "source $DNX_USER_HOME/dnvm/dnvm.sh \
+	&amp;&amp; dnvm install $DNX_VERSION -alias default -r coreclr \
+	&amp;&amp; dnvm alias default | xargs -i ln -s $DNX_USER_HOME/runtimes/{} $DNX_USER_HOME/runtimes/default"
+
+# Install libuv for Kestrel from source code (binary is not in wheezy and one in jessie is still too old)
+# Combining this with the uninstall and purge will save us the space of the build tools in the image
+RUN LIBUV_VERSION=1.4.2 \
+	&amp;&amp; apt-get -qq update \
+	&amp;&amp; apt-get -qqy install autoconf automake build-essential libtool \
+	&amp;&amp; curl -sSL https://github.com/libuv/libuv/archive/v${LIBUV_VERSION}.tar.gz | tar zxfv - -C /usr/local/src \
+	&amp;&amp; cd /usr/local/src/libuv-$LIBUV_VERSION \
+	&amp;&amp; sh autogen.sh &amp;&amp; ./configure &amp;&amp; make &amp;&amp; make install \
+	&amp;&amp; rm -rf /usr/local/src/libuv-$LIBUV_VERSION \
+	&amp;&amp; ldconfig \
+	&amp;&amp; apt-get -y purge autoconf automake build-essential libtool \
+	&amp;&amp; apt-get -y autoremove \
+	&amp;&amp; apt-get -y clean \
+	&amp;&amp; rm -rf /var/lib/apt/lists/*
+
+
+# 设置SSH服务中终端的超时时间或不超时
+RUN echo 'ClientAliveInterval 120' &gt;&gt; /etc/ssh/sshd_config &amp;&amp; \
+echo 'ClientAliveCountMax 3' &gt;&gt; /etc/ssh/sshd_config
+
+# 设置数据卷
+RUN mkdir -p /code/
+VOLUME /code/
+WORKDIR /code/
+
+ENV PATH $PATH:$DNX_USER_HOME/runtimes/default/bin
+
+</code></pre>
+</div>
+
+<h2 id="section-2">遇到的坑</h2>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  bash: kestrel: command not found
+</code></pre>
+</div>
+
+<p>经过数次踩坑经验，如果出现以上错误，大致可能因为project.json文件里版本号不匹配，dnvm list对一下运行时的版本号。终极解决打发可以这样：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  比如版本号是：1.0.0-rc1-update1
+  直接写成：1.0.0-*
+</code></pre>
+</div>
+
+<p>如果镜像构建失败，不要找原因了，妥妥的是网络被墙，解决办法是通过dockerhub构建，这里推荐用时速云的国际节点。</p>
+
+<p>yo如果出现如下提示：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  Error: EACCES, permission denied '/root/.config/configstore/insight-yo.yml'
+  You don't have access to this file.
+
+  // 网上搜了各种找不到答案，后来终于在一些其他问题的解决办法中悟到，是因为在root下安装造成的，可通过如下方式解决：
+  mkdir /root/.config/configstore
+  chmod g+rwx /root /root/.config /root/.config/configstore
+</code></pre>
+</div>
+
+<h2 id="section-3">总结</h2>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>本地开发并部署aspnet至docker并非一件容易的事，微软因为版本问题带给我们很多坑。
+下一篇文章将研究一下aspnet5与docker接合后的优势及aspnet5特性。
+</code></pre>
+</div>
+
+<hr />
+
+<p>本人博客文章采用CC <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" title="Attribution-NonCommercial">Attribution-NonCommercial</a>协议: CC Attribution-NonCommercial 必须保留原作者署名,并且不允许用于商业用途,其他行为都是允许的。</p>
+
+<hr />
+
+
+
+
+        </section>
+
+        <aside id="sidebar">
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+
+          <p class="repo-owner">不转载，只写自己的blog</p>
+
+          <p>QQ：80186658</a></p>
+        </aside>
+      </div>
+    </div>
+
+  </body>
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74051087-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</html>

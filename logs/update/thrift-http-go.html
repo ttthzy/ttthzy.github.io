@@ -30,7 +30,7 @@
         <section id="main-content">
           
           <h2>实现thrift下http协议通讯</h2>
-<p class="meta">19 Feb 2016</p>
+<p class="meta">15 Feb 2016</p>
 
 <h2 id="section">目标</h2>
 <hr />
@@ -71,7 +71,7 @@
 <div class="highlighter-rouge"><pre class="highlight"><code>//请将下载的exe文件放到系统环境变量path里，进入idl文件所在目录，执行如下cmd
 thrift-0.9.3.exe  -gen go UserStorage.thrift
 thrift-0.9.3.exe  -gen js UserStorage.thrift
-//这里注意，生成的 user_storage-remote 文件夹仅仅是一个示例，没什么作用。 
+//这里注意，生成的 user_storage-remote 文件夹仅仅是一个示例，没什么作用。
 </code></pre>
 </div>
 
@@ -159,7 +159,7 @@ func main() {
         try {
 
             //这里用到了thrift 9.0以后的多服务支持特性
-            var mp = new Thrift.Multiplexer(); 
+            var mp = new Thrift.Multiplexer();
             var transport = new Thrift.Transport("http://127.0.0.1:9388/thrift");
             var protocol = new Thrift.Protocol(transport);
             client1 = mp.createClient('UserStorage', UserStorageClient, transport);

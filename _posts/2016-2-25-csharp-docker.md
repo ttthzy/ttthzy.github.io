@@ -120,6 +120,8 @@ categories: logs update
 
       docker run -i -t -p 22 -p 5000:5000 -v /root/aspnet5:/code  microsoft/aspnet:latest /bin/bash
 
+      在容器里 dnu restore 一下依赖包，否则有可能发生各种逗比错误。
+
 5、宿主机访问5000端口测试api接口即可。
 
 6、一个完整的dockerfile：

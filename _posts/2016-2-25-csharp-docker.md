@@ -1,5 +1,6 @@
 ---
 layout: post
+author: ttthzy
 title:  "用docker构建AspNet5应用"
 permalink: /:categories/:title.html
 date:   2016-02-25 12:00:00 +0800
@@ -200,6 +201,12 @@ yo如果出现如下提示：
 
     本地开发并部署aspnet至docker并非一件容易的事，微软因为版本问题带给我们很多坑。
     下一篇文章将研究一下aspnet5与docker接合后的优势及aspnet5特性。
+
+    **感谢时速云大牛'小飞侠'的共同协助，才得以将aspnet5作为时速云的第7个运行时发布。**
+   
+    https://hub.tenxcloud.com/repos/tenxcloud/aspnet5
+
+![](http://i13.tietuku.com/7b586571b6aa20d6.jpg)
 
 
 ----------

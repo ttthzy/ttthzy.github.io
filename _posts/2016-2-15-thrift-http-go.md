@@ -1,5 +1,6 @@
 ---
 layout: post
+author: ttthzy
 title:  "实现thrift下http协议通讯"
 permalink: /:categories/:title.html
 date:   2016-02-15 13:42:31 +0800

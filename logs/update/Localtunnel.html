@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title> Localtunnel内网穿透工具的安装与使用 </title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1> SecondLife </h1>
+        <h2>The future is scary but you can’t just run to the past cause it’s familiar.</h2>
+        
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          
+          <h2>Localtunnel内网穿透工具的安装与使用</h2>
+<p class="meta">02 May 2016</p>
+
+<h4 id="section">简介</h4>
+
+<p>Localtunnel可以方便快捷的实现你的本地web服务通过外网访问，无需修改DNS和防火墙设置，其实原理与ngrok类似。但Localtunnel是基于nodejs的，而ngrok是基于go语言。</p>
+
+<p>源码地址
+<a href="https://github.com/localtunnel/localtunnel">https://github.com/localtunnel/localtunnel</a></p>
+
+<h4 id="localtunnel">使用官方提供的Localtunnel服务端</h4>
+
+<h5 id="localtunnel-1">安装localtunnel客户端</h5>
+
+<p>localtunnel是基于node.js的一个模块，所以首先需要安装node.js和npm。(此部分略)</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $npm install -g localtunnel
+</code></pre>
+</div>
+
+<h5 id="section-1">使用</h5>
+
+<p>假设本地服务器在81端口，我们可以通过下面的命令把本地服务器暴露到公网中</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $lt --port 81
+ your url is: https://ouumalrvoi.localtunnel.me
+</code></pre>
+</div>
+
+<p>通过上面的命令，我们不需要做其他设置就可以通过https://ouumalrvoi.localtunnel.me来访问我们本地服务器了。</p>
+
+<p>如果想通过固定的域名访问，则可以通过以下命令进行设置，成功后可通过https://mike.localtunnel.me而访问到本地服务器。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $lt --subdomain mike --port 81
+ $lt -s mike -p 81
+</code></pre>
+</div>
+
+<h4 id="localtunnel-2">自建Localtunnel服务端</h4>
+
+<p>由于localtunnel.me是国外的服务器，访问速度有时候不太理想，这时候我们可以自己搭建localtunnel的服务端。</p>
+
+<h5 id="section-2">安装服务端</h5>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $git clone https://github.com/localtunnel/server.git localtunnel-server
+ $cd localtunnel-server
+ $npm install ##### 使用
+</code></pre>
+</div>
+
+<p>以监听2000端口为例：</p>
+
+<h5 id="section-3">直接使用</h5>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $bin/server --port 2000
+ localtunnel server listening on port: 2000 +0ms
+</code></pre>
+</div>
+
+<h5 id="pm2">配合pm2使用</h5>
+
+<p>安装pm2</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $npm install -g pm2
+</code></pre>
+</div>
+
+<p>运行</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $pm2 --name lt start bin/server -- --port 2000
+</code></pre>
+</div>
+
+<p>启动服务端程序后，我们只要在使用客户端lt时加上–host参数，就可以指定服务端了。</p>
+
+<p>host后面不要加/</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $lt --host http://imike.me:2000 --port 81
+ your url is: http://imike.me:2000
+</code></pre>
+</div>
+
+<p>这样，我们就可以通过自己的代理服务器来访问本地服务器了，不用经过第三方代理服务器，不必担心代理服务器的安全问题。</p>
+
+<h4 id="section-4">高级用法</h4>
+
+<h5 id="section-5">反向代理</h5>
+
+<p>在Github 上面有一份Nginx的配置，我们可以直接使用，或者按照自己的需要做些修改。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>proxy_http_version 1.1;
+
+# http://nginx.org/en/docs/http/websocket.html
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+upstream lt-server {
+    server 127.0.0.1:2000;
+}
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server ipv6only=on;
+
+    server_name .localtunnel.me;
+
+    location / {
+        proxy_pass http://lt-server/;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto http;
+        proxy_set_header X-NginX-Proxy true;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_redirect off;
+    }
+}
+
+server {
+    listen 443 default_server ssl spdy;
+    listen [::]:443 default_server ipv6only=on;
+
+    server_name .localtunnel.me;
+
+    ssl on;
+
+    ssl_certificate      /etc/nginx/ssl/STAR.localtunnel.me.crt;
+    ssl_certificate_key  /etc/nginx/ssl/STAR.localtunnel.me.key;
+
+    ssl_protocols              SSLv3 TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers                RC4:HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers  on;
+
+    ssl_session_cache    shared:SSL:10m;
+    ssl_session_timeout  10m;
+
+    location / {
+        proxy_pass http://lt-server/;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header X-NginX-Proxy true;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_redirect off;
+    }
+}
+
+</code></pre>
+</div>
+
+<h5 id="section-6">指定子域名</h5>
+
+<p>有时候，用随机字符串作为子域名并不是一件好事，我们可能需要固定的域名来访问本地服务器。这时，lt –subdomain就可以派上用场了。</p>
+
+<p>subdomain限制长度为4 ~ 63</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $lt --host http://tunnel.imike.me:2000 --port 81 --subdomain mysubdomain
+ your url is: http://mysubdomain.tunnel.imike.me:2000
+</code></pre>
+</div>
+
+<p>看到了吗？通过–subdomain，我们就可以指定自己喜欢的子域名了。</p>
+
+<p>然而，如果我们通过–host来指定子域名，会发生什么？</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> $lt --host http://tunnel.imike.me:2000 --port 81
+ Error: localtunnel server returned an error, please try again
+</code></pre>
+</div>
+
+<p>就算配置了 Nginx 的反向代理，你依然会得到这个错误。</p>
+
+<p>要解决这个问题，最简单的就是不用–host来指定子域名，而用–subdomain来指定。</p>
+
+<hr />
+
+<p>本人博客文章采用CC <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" title="Attribution-NonCommercial">Attribution-NonCommercial</a>协议: CC Attribution-NonCommercial 必须保留原作者署名,并且不允许用于商业用途,其他行为都是允许的。</p>
+
+<hr />
+
+
+
+
+        </section>
+
+        <aside id="sidebar">
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+
+          <p class="repo-owner">技术合作及交流</p>
+
+          <p>QQ：80186658</a></p>
+        </aside>
+      </div>
+    </div>
+
+  </body>
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74051087-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</html>

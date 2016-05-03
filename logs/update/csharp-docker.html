@@ -160,24 +160,23 @@
 
 <p>6、一个完整的dockerfile：</p>
 
-<p>```
-### My_AspNet5_Docker_Image
-### 80186658@qq.com</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>### My_AspNet5_Docker_Image
+### 80186658@qq.com
 
-<p>FROM debian:jessie</p>
+FROM debian:jessie
 
-<p>ENV DNX_VERSION 1.0.0-beta8
-ENV DNX_USER_HOME /opt/dnx</p>
+ENV DNX_VERSION 1.0.0-beta8
+ENV DNX_USER_HOME /opt/dnx
 
-<p>RUN apt-get -qq update &amp;&amp; apt-get -qqy install unzip curl libicu-dev libunwind8 gettext libssl-dev libcurl3-gnutls zlib1g &amp;&amp; rm -rf /var/lib/apt/lists/*</p>
+RUN apt-get -qq update &amp;&amp; apt-get -qqy install unzip curl libicu-dev libunwind8 gettext libssl-dev libcurl3-gnutls zlib1g &amp;&amp; rm -rf /var/lib/apt/lists/*
 
-<p>RUN curl -sSL https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.sh | DNX_USER_HOME=$DNX_USER_HOME DNX_BRANCH=v$DNX_VERSION sh
-RUN bash -c “source $DNX_USER_HOME/dnvm/dnvm.sh \
+RUN curl -sSL https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.sh | DNX_USER_HOME=$DNX_USER_HOME DNX_BRANCH=v$DNX_VERSION sh
+RUN bash -c "source $DNX_USER_HOME/dnvm/dnvm.sh \
 	&amp;&amp; dnvm install $DNX_VERSION -alias default -r coreclr \
-	&amp;&amp; dnvm alias default | xargs -i ln -s $DNX_USER_HOME/runtimes/{} $DNX_USER_HOME/runtimes/default”</p>
+	&amp;&amp; dnvm alias default | xargs -i ln -s $DNX_USER_HOME/runtimes/{} $DNX_USER_HOME/runtimes/default"
 
-<h1 id="install-libuv-for-kestrel-from-source-code-binary-is-not-in-wheezy-and-one-in-jessie-is-still-too-old">Install libuv for Kestrel from source code (binary is not in wheezy and one in jessie is still too old)</h1>
-<p># Combining this with the uninstall and purge will save us the space of the build tools in the image
+# Install libuv for Kestrel from source code (binary is not in wheezy and one in jessie is still too old)
+# Combining this with the uninstall and purge will save us the space of the build tools in the image
 RUN LIBUV_VERSION=1.4.2 \
 	&amp;&amp; apt-get -qq update \
 	&amp;&amp; apt-get -qqy install autoconf automake build-essential libtool \
@@ -189,22 +188,24 @@ RUN LIBUV_VERSION=1.4.2 \
 	&amp;&amp; apt-get -y purge autoconf automake build-essential libtool \
 	&amp;&amp; apt-get -y autoremove \
 	&amp;&amp; apt-get -y clean \
-	&amp;&amp; rm -rf /var/lib/apt/lists/*</p>
+	&amp;&amp; rm -rf /var/lib/apt/lists/*
 
-<h1 id="ssh">设置SSH服务中终端的超时时间或不超时</h1>
-<p>RUN echo ‘ClientAliveInterval 120’ » /etc/ssh/sshd_config &amp;&amp; \
-echo ‘ClientAliveCountMax 3’ » /etc/ssh/sshd_config</p>
 
-<h1 id="section-2">设置数据卷</h1>
-<p>RUN mkdir -p /code/
+# 设置SSH服务中终端的超时时间或不超时
+RUN echo 'ClientAliveInterval 120' &gt;&gt; /etc/ssh/sshd_config &amp;&amp; \
+echo 'ClientAliveCountMax 3' &gt;&gt; /etc/ssh/sshd_config
+
+# 设置数据卷
+RUN mkdir -p /code/
 VOLUME /code/
-WORKDIR /code/</p>
+WORKDIR /code/
 
-<p>ENV PATH $PATH:$DNX_USER_HOME/runtimes/default/bin</p>
+ENV PATH $PATH:$DNX_USER_HOME/runtimes/default/bin
 
-<p>```</p>
+</code></pre>
+</div>
 
-<h2 id="section-3">遇到的坑</h2>
+<h2 id="section-2">遇到的坑</h2>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>  bash: kestrel: command not found
 </code></pre>
@@ -230,7 +231,7 @@ WORKDIR /code/</p>
 </code></pre>
 </div>
 
-<h2 id="section-4">总结</h2>
+<h2 id="section-3">总结</h2>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>本地开发并部署aspnet至docker并非一件容易的事，微软因为版本问题带给我们很多坑。
 下一篇文章将研究一下aspnet5与docker接合后的优势及aspnet5特性。

@@ -206,7 +206,7 @@ yo如果出现如下提示：
    
     https://hub.tenxcloud.com/repos/tenxcloud/aspnet5
 
-![](http://i13.tietuku.com/7b586571b6aa20d6.jpg)
+
 
 
 ----------

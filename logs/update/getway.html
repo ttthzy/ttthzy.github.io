@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title> 微服务API-Gateway设计思路 </title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1> SecondLife </h1>
+        <h2>The future is scary but you can’t just run to the past cause it’s familiar.</h2>
+        
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          
+          <h2>微服务API-Gateway设计思路</h2>
+<p class="meta">02 Jun 2016</p>
+
+<h4 id="section">考虑因素</h4>
+
+<ul>
+  <li>
+    <p>通过微服务提供的API的粒度往往和客户端需要的不同。微服务通常提供细粒度的API，这意味着客户端需要与多个服务进行交互。</p>
+  </li>
+  <li>
+    <p>不同的客户端需要不同的数据。</p>
+  </li>
+  <li>
+    <p>网络性能因为不同类型的客户端而不同。</p>
+
+    <p>例如，移动网络通常要慢得多，并具有高得多的延迟。当然，任何广域网是比一个局域网慢得多。这意味着手机本地客户端使用的网络与服务端web应用的LAN的性能特点区别很大。服务端web应用可以在不影响用户体验的情况下，向后端服务发送大量请求，但手机客户端只能发送少量的请求。</p>
+  </li>
+  <li>
+    <p>服务实例数量和它们的位置（主机+端口）动态改变。</p>
+  </li>
+  <li>
+    <p>服务可能随时间改变，所以要对客户端隐藏细节。</p>
+  </li>
+</ul>
+
+<h4 id="section-1">解决方案</h4>
+
+<p><img src="/images/4758-20151103101833102-68764928.jpg" alt="" /></p>
+
+<ul>
+  <li>
+    <p>该API网关可以为每个客户端提供不同的API，而不是提供一个适合所有情况下的API。例如，Netflix的API网关运行客户端特定适配器代码，提供给每个客户端它们需要的API。</p>
+  </li>
+  <li>
+    <p>API网关还可以实现安全性，例如： 验证客户端被授权执行请求。</p>
+  </li>
+</ul>
+
+<h4 id="api">如何实现API网关？</h4>
+
+<p>API网关需要支持高并发、高负载，所以GO语言微线程方式是实现getway的最佳选择之一。</p>
+
+<h4 id="section-2">结论</h4>
+
+<p>使用API​​网关具有以下优点：</p>
+
+<ol>
+  <li>
+    <p>使服务和客户端解耦。</p>
+  </li>
+  <li>
+    <p>使客户端和服务部署环境解耦。</p>
+  </li>
+  <li>
+    <p>提供了最佳的API给每个客户端。</p>
+  </li>
+  <li>
+    <p>减少的请求/往返次数。例如，API网关可以一次性检索多个服务的数据。更少的请求也意味着更少的开销，提高了用户体验。一个API网关对于移动应用至关重要。</p>
+  </li>
+  <li>
+    <p>简化了客户端的调用，因为API网关可以组合服务，并提供组合后的façade接口。</p>
+  </li>
+</ol>
+
+<p>API网关模式也有一些缺点：</p>
+
+<ol>
+  <li>
+    <p>增加的复杂性，API网关是必须开发、部署和管理的另一个应用。</p>
+  </li>
+  <li>
+    <p>增加的响应时间，因为通过API网关多了一层网络跳转。然而，对于大多数应用的额外往返的成本是微不足道的。</p>
+  </li>
+</ol>
+
+<hr />
+
+<p>本人博客文章采用CC <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" title="Attribution-NonCommercial">Attribution-NonCommercial</a>协议: CC Attribution-NonCommercial 必须保留原作者署名,并且不允许用于商业用途,其他行为都是允许的。</p>
+
+<hr />
+
+
+
+
+        </section>
+
+        <aside id="sidebar">
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+          <a href="#" class="button">
+            <small>Download</small>
+            暂无下载
+          </a>
+
+          <p class="repo-owner">技术合作及交流</p>
+
+          <p>QQ：80186658</a></p>
+        </aside>
+      </div>
+    </div>
+
+  </body>
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74051087-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</html>
